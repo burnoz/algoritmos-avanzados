@@ -6,7 +6,7 @@ using namespace std;
 
 // Obtiene el prefijo mas largo que es sufijo
 // Complejidad: O(n)
-string getLPS(string text){
+vector<int> getLPS(string text){
     int n = text.size();
 
     vector<int> lps(n, 0);
@@ -36,7 +36,7 @@ string getLPS(string text){
         }
     }
 
-    return text.substr(0, lps[n-1]);
+    return lps;
 }
 
 
@@ -46,7 +46,7 @@ vector<int> kmp(string text, string pattern){
     int n = text.size();
     int m = pattern.size();
 
-    vector<int> lps(m, 0);
+    vector<int> lps = getLPS(pattern);
     vector<int> occurrences;
 
     int len_prefix = 0;
@@ -93,7 +93,7 @@ int main(){
     // cout << lps << endl;
 
     string text = "ababcababcabc";
-    string pattern = "abc";
+    string pattern = "abcab";
 
     vector<int> occurrences = kmp(text, pattern);
 
