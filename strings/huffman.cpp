@@ -37,7 +37,8 @@ public:
         cout << endl;
     }
 
-    void preorder(Node* node){
+    // Recorrido preorder
+    void preorder(Node *node){
         if(!node){
             return;
         }
@@ -47,61 +48,130 @@ public:
         preorder(node->right);
     }
 
-    void get_codes(Node* node, string code, map<char, string>& table){
+    // Muestra el arbol por niveles (BFS)
+    void show_tree() {
+        if(!root){
+            return;
+        }
+
+        queue<Node*> q;
+        q.push(root);
+
+        int level = 1;
+        while(!q.empty()){
+            int n = q.size();
+            cout << level << ": ";
+
+            vector<string> nodos;
+
+            for(int i = 0; i < n; i++){
+                Node *node = q.front();
+                q.pop();
+                string s;
+
+                if(node->character != '\0') {
+                    s = string(1, node->character) + " - " + to_string(node->prob);
+                } 
+                
+                else{
+                    s = "(" + to_string(node->prob) + ")";
+                }
+
+                nodos.push_back(s);
+
+                if(node->left){
+                    q.push(node->left);
+                }
+
+                if(node->right){
+                    q.push(node->right);
+                }
+            }
+
+            for(int i = 0; i < nodos.size(); i++) {
+                cout << nodos[i];
+                if(i + 1 < nodos.size()){
+                    cout << " | ";
+                }
+            }
+
+            cout << endl;
+            level++;
+        }
+    }
+
+    void get_codes(Node *node, string code, map<char, string>& table){
         if(!node){
             return;
         }
 
+        // Si es hoja, guarda el codigo
         if(!node->left && !node->right && node->character != '\0'){
             table[node->character] = code;
             return;
         }
 
-        if(node->left) get_codes(node->left, code + "0", table);
-        if(node->right) get_codes(node->right, code + "1", table);
+        // Recorre el arbol agregando 0 para izquierda y 1 para derecha
+        if(node->left){
+            get_codes(node->left, code + "0", table);
+        } 
+
+        if(node->right){
+            get_codes(node->right, code + "1", table);
+        }
     }
 };
 
-
+// Funcion objeto para comparar probabilidades y caracteres de los nodos
 class CompareTree{
 public:
-    bool operator()(Tree* a, Tree* b){
-        if(a->root->prob == b->root->prob)
+    bool operator()(Tree *a, Tree *b){
+        if(a->root->prob == b->root->prob){
             return a->root->character > b->root->character;
+        }
+
         return a->root->prob > b->root->prob;
     }
 };
 
 
-Tree* create_huffman_tree(const vector<char>& alphabet, const vector<double>& probabilities){
+Tree *create_huffman_tree(vector<char> alphabet, vector<double> probabilities){
+    // Fila de prioridad para los arboles
     priority_queue<Tree*, vector<Tree*>, CompareTree> trees;
 
     int n = alphabet.size();
     
-    for(int i = 0; i < n; ++i){
+    // Crear un nodo para cada caracter y su probabilidad
+    for(int i = 0; i < n; i++){
         Node* node = new Node(alphabet[i], probabilities[i]);
         trees.push(new Tree(node));
     }
     
     while(trees.size() > 1){
+        // Sacar los dos arboles con menor probabilidad
         Tree* a = trees.top(); trees.pop();
         Tree* b = trees.top(); trees.pop();
         
+        // Crear un nuevo nodo padre
         Node* new_node = new Node('\0', a->root->prob + b->root->prob);
+        // Agrega los nodos de menor probabilidad como hijos
         new_node->left = a->root;
         new_node->right = b->root;
+        // Asigna etiquetas para codificacion
         new_node->left->tag = 0;
         new_node->right->tag = 1;
         
-        trees.push( new Tree(new_node) );
+        // Crear un nuevo arbol con el nodo padre y agregarlo a la fila de prioridad
+        trees.push(new Tree(new_node));
     }
 
     return trees.top();
 }
 
-string encode(const string& text, map<char, string> table){
+string encode(string text, map<char, string> table){
     string result;
     
+    // Obtiene el codigo para cada caracter
     for(char c : text){
         result += table.at(c);
     }
@@ -109,14 +179,22 @@ string encode(const string& text, map<char, string> table){
     return result;
 }
 
-string decode(string encoded, Node* root){
+string decode(string encoded, Node *root){
     string result;
-    Node* node = root;
+    Node *node = root;
 
-    for(int i = 0; i < encoded.size(); ++i){
-        if(encoded[i] == '0') node = node->left;
-        else node = node->right;
+    for(int i = 0; i < encoded.size(); i++){
+        // Si el tag es 0, va a la izquierda
+        if(encoded[i] == '0') {
+            node = node->left;
+        }
 
+        // Si el tag es 1, va a la derecha
+        else{
+            node = node->right;
+        } 
+
+        // Si es hoja, agrega el caracter al resultado y vuelve a la raiz
         if(!node->left && !node->right){
             result += node->character;
             node = root;
@@ -127,7 +205,7 @@ string decode(string encoded, Node* root){
 }
 
 // Lee un archivo de texto y calcula las probabilidades de cada letra
-string process_file(string text, map<char, double>& freq_map){
+string process_file(string text, map<char, double>& freq_map, map<char, int>& occurrences){
     ifstream file(text);
 
     if (!file.is_open()) {
@@ -139,13 +217,16 @@ string process_file(string text, map<char, double>& freq_map){
     int total = 0;
     string file_content;
     
-    while(file.get(c)) {
+    // Cuenta la frecuencia de cada caracter y guarda el contenido del archivo
+    while(file.get(c)){
         freq_map[c]++;
+        occurrences[c]++;
         total++;
         file_content += c;
     }
 
-    for(auto& pair : freq_map) {
+    // Convierte las frecuencias a probabilidades
+    for(auto& pair : freq_map){
         pair.second /= total;
     }
 
@@ -157,51 +238,39 @@ string process_file(string text, map<char, double>& freq_map){
 
 int main(){
     map<char, double> freq_map;
+    map<char, int> occ_map;
     string filename = "escalera.txt";
-    string file_content = process_file(filename, freq_map);
+    string file_content = process_file(filename, freq_map, occ_map);
 
     vector<char> alphabet;
     vector<double> probabilities;
+    vector<int> occurrences;
 
-    for(const auto& pair : freq_map) {
+    // Separa los caracteres y sus probabilidades
+    for(auto pair : freq_map) {
         alphabet.push_back(pair.first);
         probabilities.push_back(pair.second);
     }
 
-    Tree* huffman_tree = create_huffman_tree(alphabet, probabilities);
+    // Guarda las ocurrencias de cada caracter
+    for(auto pair : occ_map) {
+        occurrences.push_back(pair.second);
+    }
+
+    // Crea el arbol de Huffman y la tabla de codigos
+    Tree *huffman_tree = create_huffman_tree(alphabet, probabilities);
     map<char, string> code_table;
     huffman_tree->get_codes(huffman_tree->root, "", code_table);
 
-    for(auto pair : code_table){
-        cout << pair.first << ": " << pair.second << endl;
-    }
-
-    string encoded = encode(file_content, code_table);
-
-    string bin_file = "encoded.bin";
-    ofstream out(bin_file, ios::binary);
-    out << encoded;
-    out.close();
-
-    string decoded = decode(encoded, huffman_tree->root);
-    // cout << "Decoded matches original: " << decoded << endl;
-
-    // Menu    
-    // 1. Codificar / decodificar archivos dados. 
-    // 2. Mostrar una lista de los caracteres, con sus ocurrencias, probabilidades y códigos
-    // 3. Codificar lo que el usuario ingrese.
-    // 4. Decodificar lo que el usuario ingrese
-    // 5. Mostrar el arbol. Diseña tu propio formato que sea legible. 
-
     while(true){
-        cout << "Menu:\n";
-        cout << "1. Codificar archivo\n";
-        cout << "2. Decodificar archivo\n";
-        cout << "3. Codificar texto\n";
-        cout << "4. Decodificar texto\n";
-        cout << "5. Mostrar tabla de codigos\n";
-        cout << "6. Mostrar arbol\n";
-        cout << "7. Salir\n";
+        cout << "Menu:" << endl;
+        cout << "1. Codificar archivo" << endl;
+        cout << "2. Decodificar archivo" << endl;
+        cout << "3. Codificar texto" << endl;
+        cout << "4. Decodificar texto" << endl;
+        cout << "5. Mostrar tabla de codigos" << endl;
+        cout << "6. Mostrar arbol" << endl;
+        cout << "7. Salir" << endl;
         cout << "Elige una opcion: ";
         int option;
         cin >> option;
@@ -211,16 +280,22 @@ int main(){
             cout << "Ingresa el nombre del archivo a codificar: ";
             cin >> input_file;
 
-            map<char, double> freq_map;
-            string file_content = process_file(input_file, freq_map);
+            ifstream file(input_file);
+            string content;
+            string line;
 
-            string encoded = encode(file_content, code_table);
+            while(getline(file, line)){
+                content += line + "\n";
+            }
+
+            string encoded = encode(content, code_table);
             string bin_file = "encoded.bin";
             ofstream out(bin_file, ios::binary);
             out << encoded;
             out.close();
 
             cout << "Archivo codificado y guardado en " << bin_file << endl;
+            cout << endl;
         }
 
         else if(option == 2){
@@ -229,43 +304,57 @@ int main(){
             cin >> bin_file;
 
             ifstream in(bin_file, ios::binary);
-            string encoded((istreambuf_iterator<char>(in)), istreambuf_iterator<char>());
+            string line;
+            string encoded;
+
+            while(getline(in, line)){
+                encoded += line;
+            }
+
             in.close();
 
             string decoded = decode(encoded, huffman_tree->root);
             cout << "Archivo decodificado:\n" << decoded << endl;
+            cout << endl;
         }
 
         else if(option == 3){
-            cin.ignore(); // Limpiar el buffer
+            cin.ignore();
             string text;
             cout << "Ingresa el texto a codificar: ";
             getline(cin, text);
 
             string encoded = encode(text, code_table);
             cout << "Texto codificado: " << encoded << endl;
+            cout << endl;
         }
 
         else if(option == 4){
-            cin.ignore(); // Limpiar el buffer
+            cin.ignore();
             string encoded;
-            cout << "Ingresa el texto a decodificar (secuencia de 0s y 1s): ";
+            cout << "Ingresa el texto a decodificar: ";
             getline(cin, encoded);
 
             string decoded = decode(encoded, huffman_tree->root);
             cout << "Texto decodificado: " << decoded << endl;
+            cout << endl;
         }
 
         else if(option == 5){
             cout << "Tabla de codigos:\n";
+            
             for(auto pair : code_table){
-                cout << pair.first << ": " << pair.second << endl;
+                cout << pair.first << ": " << pair.second << " - Ocurrencias: " << occ_map[pair.first] << " - Probabilidad: " << freq_map[pair.first] << endl;
             }
+            
+            cout << endl;
         }
 
         else if(option == 6){
-            cout << "Arbol de Huffman (preorder probabilities): ";
-            huffman_tree->show();
+            cout << "Arbol de Huffman:" << endl;
+            huffman_tree->show_tree();
+
+            cout << endl;
         }
 
         else if(option == 7){
