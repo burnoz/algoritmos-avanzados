@@ -41,7 +41,6 @@ bool find_node(vector<Node> vec, Node value){
 // Algoritmo de Welsh-Powell para colorear un grafo
 // Devuelve un vector con el color asignado a cada nodo y el numero de colores usados
 pair<vector<int>, int> welsh_powell(const vector<vector<int>>& graph){
-    // Crea nodos y calcula grados
     int n = graph.size();
     vector<Node> nodes;
     vector<Node> procesados = {};
@@ -81,7 +80,6 @@ pair<vector<int>, int> welsh_powell(const vector<vector<int>>& graph){
 
     vector<int> color(n, -1); // -1: sin color
     int k = 0; // color actual
-    int num_colors = 0;
 
     while(!pq.empty()){
         Node u = pq.top();
