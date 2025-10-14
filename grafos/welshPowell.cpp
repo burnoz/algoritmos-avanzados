@@ -38,6 +38,8 @@ bool find_node(vector<Node> vec, Node value){
     return false;
 }
 
+// Algoritmo de Welsh-Powell para colorear un grafo
+// Devuelve un vector con el color asignado a cada nodo y el numero de colores usados
 pair<vector<int>, int> welsh_powell(const vector<vector<int>>& graph){
     // Crea nodos y calcula grados
     int n = graph.size();
@@ -45,11 +47,13 @@ pair<vector<int>, int> welsh_powell(const vector<vector<int>>& graph){
     vector<Node> procesados = {};
     vector<char> names = {'A','B','C','D','E'};
 
+    // Agrega nodos a la lista
     for(int i = 0; i < n; i++){
         Node nodo(names[i]);
         nodes.push_back(nodo);
     }
 
+    // Calcula grados y vecinos
     for(int i = 0; i < n; i++){
         for(int j = 0; j < n; j++){
             if(graph[i][j] == 1){
@@ -59,9 +63,10 @@ pair<vector<int>, int> welsh_powell(const vector<vector<int>>& graph){
         }
     }
 
-    // Ordena nodos por grado ascendente
+    // Prioridad por grado descendente
     priority_queue<Node, vector<Node>, CompareNode> pq;
 
+    // Agrega nodos a la cola de prioridad
     for(int i = 0; i < n; i++){
         pq.push(nodes[i]);
     }
@@ -82,6 +87,7 @@ pair<vector<int>, int> welsh_powell(const vector<vector<int>>& graph){
         Node u = pq.top();
         pq.pop();
 
+        // Si el nodo ya fue procesado, salta al siguiente
         if(find_node(procesados, u)){
             continue;
         }
@@ -89,14 +95,15 @@ pair<vector<int>, int> welsh_powell(const vector<vector<int>>& graph){
         u.color = k;
         color[u.value - 'A'] = k; // Asigna color al nodo
 
-        // Por cada nodo que no es vecino de u y no ha sido procesado
         for(int i = 0; i < n; i++){
+            // Si es el mismo nodo o ya fue procesado, salta
             if(i == (u.value - 'A') || find_node(procesados, nodes[i])){
                 continue;
             }
 
             bool esVecino = false;
 
+            // Verifica si es vecino
             for(int vecino = 0; vecino < u.vecinos.size(); vecino++){
                 if(u.vecinos[vecino] == i){
                     esVecino = true;
@@ -104,6 +111,7 @@ pair<vector<int>, int> welsh_powell(const vector<vector<int>>& graph){
                 }
             }
 
+            // Si no es vecino, asigna el mismo color
             if(!esVecino){
                 nodes[i].color = k;
                 color[i] = k; // Asigna color al nodo
@@ -112,15 +120,13 @@ pair<vector<int>, int> welsh_powell(const vector<vector<int>>& graph){
         }
 
         procesados.push_back(u);
-        k++; // Incrementa el color para el siguiente conjunto
+        k++; // incrementa el color para el siguiente conjunto
     }
 
     return {color, k};
 }
 
 int main(){
-    // Ejemplo: grafo de la imagen
-	// A=0, B=1, C=2, D=3, E=4
 	vector<vector<int>> graph = {
 		{0,1,1,1,0}, // A
 		{1,0,1,0,1}, // B
@@ -130,7 +136,7 @@ int main(){
 	};
 
     vector<char> names = {'A','B','C','D','E'};
-    // Colores de catppuccin
+    // Colores de catppuccin ᓚᘏᗢ
     vector<string> colores = {"Lavender", "Sapphire", "Mauve", "Flamingo", "Rosewater", "Maroon"};
 
     pair<vector<int>, int> res = welsh_powell(graph);
@@ -142,6 +148,8 @@ int main(){
     for(int i = 0; i < color.size(); i++){
         cout << names[i] << ": " << color[i] << " (Color: " << colores[color[i]] << ")" << endl;
     }
+
+    cout << endl;
 
     cout << "Colores usados: " << k << endl;
 

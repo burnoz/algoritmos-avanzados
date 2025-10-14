@@ -3,13 +3,12 @@
 
 using namespace std;
 
-// Algoritmo greedy básico para colorear un grafo
-// graph: matriz de adyacencia (nodos de 0 a n-1)
-// Devuelve un vector con el color asignado a cada nodo y el número de colores usados
+// Algoritmo greedy basico para colorear un grafo
+// Devuelve un vector con el color asignado a cada nodo y el numero de colores usados
 pair<vector<int>, int> greedy_coloring(const vector<vector<int>>& graph){
     int n = graph.size();
     vector<int> color(n, -1); // -1: sin color
-    int k = 0; // número de colores usados
+    int k = 0; // numero de colores usados
 
     // Para cada nodo
     for(int u = 0; u < n; u++) {
@@ -23,7 +22,7 @@ pair<vector<int>, int> greedy_coloring(const vector<vector<int>>& graph){
             }
         }
         
-        // Busca el color más pequeño no usado
+        // Busca el color mas pequeño no usado
         int c;
         
         for(c = 0; c < n; c++) {
@@ -43,8 +42,6 @@ pair<vector<int>, int> greedy_coloring(const vector<vector<int>>& graph){
 }
 
 int main() {
-    // Ejemplo: grafo de la imagen
-    // A=0, B=1, C=2, D=3, E=4
     vector<vector<int>> graph = {
         {0,1,1,1,0}, // A
         {1,0,1,0,1}, // B
@@ -54,7 +51,7 @@ int main() {
     };
 
     vector<char> names = {'A','B','C','D','E'};
-    // Colores de catppuccin
+    // Colores de catppuccin ᓚᘏᗢ
     vector<string> colores = {"Lavender", "Sapphire", "Mauve", "Flamingo", "Rosewater", "Maroon"};
 
     pair<vector<int>, int> result = greedy_coloring(graph);
@@ -67,6 +64,8 @@ int main() {
     for(int i = 0; i < color.size(); i++){
         cout << names[i] << ": " << color[i] << " (Color: " << colores[color[i]] << ")" << endl;
     }
+
+    cout << endl;
     
     cout << "Colores usados: " << k << endl;
     
