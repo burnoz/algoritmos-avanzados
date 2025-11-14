@@ -87,7 +87,7 @@ def bisector(p, q):
     return a, b, c
 
 # Asegura que el punto esta mas cerca de p que de q
-def point_in_half_plane(point, p, q):
+def closer(point, p, q):
     d1 = (point.x - p.x) ** 2 + (point.y - p.y) ** 2
     d2 = (point.x - q.x) ** 2 + (point.y - q.y) ** 2
 
@@ -116,28 +116,28 @@ def intersect(A, B, a, b, c):
     return Point(ix, iy)
 
 # Crea una nueva celda recortando el poligono original con el bisector entre p y q
-def clip_cell(polygon, p, q):
-    if not polygon:
+def clip_cell(cell, p, q):
+    if not cell:
         return []
     
     # Bisector
     a, b, c = bisector(p, q)
     
-    new_poly = []
+    new_cell = []
     
-    m = len(polygon)
+    m = len(cell)
     
     for i in range(m):
         # Segmentos de la celda
-        A = polygon[i]
-        B = polygon[(i + 1) % m]
+        A = cell[i]
+        B = cell[(i + 1) % m]
         
-        inside_A = point_in_half_plane(A, p, q)
-        inside_B = point_in_half_plane(B, p, q)
+        inside_A = closer(A, p, q)
+        inside_B = closer(B, p, q)
         
         # Ambos puntos mas cerca de p
         if inside_A and inside_B:
-            new_poly.append(Point(B.x, B.y))
+            new_cell.append(Point(B.x, B.y))
 
         # A mas cerca de p, B mas cerca de q
         elif inside_A and not inside_B:
@@ -145,7 +145,7 @@ def clip_cell(polygon, p, q):
             I = intersect(A, B, a, b, c)
             
             if I:
-                new_poly.append(I)
+                new_cell.append(I)
 
         # A mas cerca de q, B mas cerca de p
         elif not inside_A and inside_B:
@@ -153,30 +153,14 @@ def clip_cell(polygon, p, q):
             I = intersect(A, B, a, b, c)
             
             if I:
-                new_poly.append(I)
+                new_cell.append(I)
 
-            new_poly.append(Point(B.x, B.y))
+            new_cell.append(Point(B.x, B.y))
         
         else:
             pass
 
-    
-    # Eliminar puntos duplicados consecutivos
-    cleaned = []
-    for point in new_poly:
-        if not cleaned:
-            cleaned.append(point)
-        else:
-            last = cleaned[-1]
-            if abs(last.x - point.x) > 1e-12 or abs(last.y - point.y) > 1e-12:
-                cleaned.append(point)
-
-    if len(cleaned) > 1:
-        first = cleaned[0]
-        last = cleaned[-1]
-        if abs(first.x - last.x) < 1e-12 and abs(first.y - last.y) < 1e-12:
-            cleaned.pop()
-    return cleaned
+    return new_cell
 
 
 def voronoi(pumps, padding):
@@ -229,7 +213,16 @@ def main():
     pumps = getPumps("pumps.csv")
     deaths = getDeaths("deaths.csv")
 
-    voronoi(pumps, 0.001)
+    cells = voronoi(pumps, 0.001)
+
+    # Imprime los segmentos de las celdas
+    for cell in cells:
+        print("Celda: ")
+        
+        for point in cell:
+            print(f"({point.x}, {point.y})", end=" ")
+        
+        print("\n")
 
     plt.figure()
 
@@ -243,7 +236,7 @@ def main():
         plt.plot(pump.coords.x, pump.coords.y, 'ro')
         plt.text(pump.coords.x, pump.coords.y, pump.name, fontsize=9, ha='right')
 
-    cmap = plt.cm.get_cmap('tab20', max(1, len(pumps)))
+    cmap = plt.get_cmap('tab20', max(1, len(pumps)))
     colors = [cmap(i) for i in range(len(pumps))]
 
     for death in deaths:
